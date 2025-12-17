@@ -11,6 +11,7 @@ import { ImportModal } from "@/components/ImportModal";
 import { parseTransmissionSii } from "@/lib/siiParser";
 import { generateTransmissionSii } from "@/lib/transmissionSiiGenerator";
 import { usePowertrain } from "@/context/PowertrainContext";
+import { TRANSMISSION_PRESETS } from "@/lib/presets";
 
 const DEFAULT_GEARS = [
     { name: "Rev", ratio: -14.56 },
@@ -29,6 +30,20 @@ export default function TransmissionEditor() {
         gears,
         setGears
     } = usePowertrain();
+
+    const handleLoadPreset = (presetId: string) => {
+        const preset = TRANSMISSION_PRESETS.find(p => p.id === presetId);
+        if (!preset) return;
+
+        setSpecs(prev => ({
+            ...prev,
+            ...preset,
+            // Preserve truck context
+            truckInternalName: prev.truckInternalName,
+        }));
+
+        setGears(preset.gears);
+    };
 
     // Modal State
     const [isExportOpen, setIsExportOpen] = useState(false);
@@ -116,7 +131,7 @@ export default function TransmissionEditor() {
 
                     {/* Specs Panel */}
                     <div className="bg-card border border-border rounded-xl p-6">
-                        <TransmissionSpecsPanel specs={specs} setSpecs={setSpecs} />
+                        <TransmissionSpecsPanel specs={specs} setSpecs={setSpecs} onLoadPreset={handleLoadPreset} />
                     </div>
                 </div>
 
