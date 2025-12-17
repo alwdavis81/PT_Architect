@@ -31,9 +31,18 @@ Focus on making the output "Game Ready" immediately.
 -   **Comprehensive Documentation**
     -   Updated `HOW_TO_USE.md` manual included in release.
 
-### 🚧 Up Next (Phase 2)
--   **Direct Visual Editing**
-    -   Allow users to **drag points** directly on the Torque Curve chart to adjust values.
+### 🚧 Up Next: Transmission System (CURRENT PRIORITY)
+*Project Goal: Fully implement and verify transmission module before adding new engine features.*
+-   **Transmission Export**: Complete the SCS/SII generation logic for transmissions.
+-   **Gear Ratio Table**: Finalize functionality for adding/removing and editing gear ratios.
+-   **Speed-at-RPM Visualization**: Ensure the SpeedRpmChart accurately reflects custom ratios and differential settings.
+-   **Suggest Gearing**: AI/Assistant suggest differential ratios based on the engine's "sweet spot" and desired highway speed.
+-   **Retarder & Shifting Specs**: Implement fields for retarder, names, and auxiliary settings.
+-   **Preset Library**: Add transmission presets (Eaton Fuller 13/18 speed, Allison, etc.).
+
+### 🕒 Engine Section (On Hold)
+-   **Direct Visual Editing**: Allow users to drag points directly on the Torque Curve chart (Deferred).
+
 
 ## 🛠 Phase 2: Advanced Tuning & Simulation
 Focus on "What if?" scenarios and deeper customization.
@@ -46,7 +55,6 @@ Focus on "What if?" scenarios and deeper customization.
 
 -   **Curve Smoothing & AI Assistance**
     -   "Smooth My Curve": Algorithm to take jagged input points and generate a mathematically smooth torque curve.
-    -   "Suggest Gearing": AI suggests differential ratios based on the engine's "sweet spot" (peak torque RPM) and desired highway speed.
 
 -   **Sound Bank Integration**
     -   Add a field to select sound banks (e.g., `sound: "/sound/truck/default/v8.bank"`).
