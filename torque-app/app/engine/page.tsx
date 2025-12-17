@@ -395,7 +395,8 @@ export default function EngineEditor() {
                     filename={`${engineSpecs.name.replace(/\s+/g, '_')}.sii`}
                     metadata={{
                         truckInternalName: engineSpecs.truckInternalName,
-                        engineName: engineSpecs.name
+                        componentName: engineSpecs.name,
+                        type: 'engine'
                     }}
                 />
 

@@ -10,6 +10,7 @@ interface TransSpecs {
     retarder: number; // 0 to 3+
     rpmLimit: number; // For visualization only usually, but good to set bounds
     tireDiameter: number;
+    truckInternalName: string;
 }
 
 interface TransmissionSpecsPanelProps {
@@ -35,6 +36,16 @@ export function TransmissionSpecsPanel({ specs, setSpecs }: TransmissionSpecsPan
                             type="text"
                             value={specs.name}
                             onChange={(e) => updateField("name", e.target.value)}
+                            className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded px-3 py-2 text-sm text-zinc-900 dark:text-white focus:border-accent outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs text-zinc-500 mb-1 block">Truck Internal Name (e.g. peterbilt.389)</label>
+                        <input
+                            type="text"
+                            placeholder="Optional"
+                            value={specs.truckInternalName || ""}
+                            onChange={(e) => updateField("truckInternalName", e.target.value)}
                             className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded px-3 py-2 text-sm text-zinc-900 dark:text-white focus:border-accent outline-none"
                         />
                     </div>

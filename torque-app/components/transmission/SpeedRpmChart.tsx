@@ -11,6 +11,7 @@ import {
     ResponsiveContainer,
     ReferenceLine
 } from "recharts";
+import { calculateRpm, calculateSpeed } from "@/lib/transmissionUtils";
 
 interface Gear {
     name: string;
@@ -41,28 +42,26 @@ export function SpeedRpmChart({ gears, diffRatio, tireDiameter, rpmLimit }: Spee
         // Max speed at highest gear (lowest ratio > 0) at Max RPM.
 
         // Filter only forward gears
-        const fwdGears = gears.filter(g => g.ratio > 0).sort((a, b) => b.ratio - a.ratio); // Sort high ratio (low gear) to low ratio (high gear)
+        const fwdGears = gears.filter(g => g.ratio > 0).sort((a, b) => b.ratio - a.ratio);
         if (fwdGears.length === 0) return [];
 
         const topGear = fwdGears[fwdGears.length - 1];
-        const topSpeed = (rpmLimit * tireDiameter) / (topGear.ratio * diffRatio * 336);
+        const maxSpeedAtLimit = calculateSpeed(rpmLimit + 500, topGear.ratio, diffRatio, tireDiameter);
 
         // Generate ~20 points along the X axis (Speed)
         const points = [];
-        const step = 5; // every 5 mph
-        for (let speed = 0; speed <= Math.ceil(topSpeed) + 10; speed += step) {
+        const step = 2; // more resolution
+        for (let speed = 0; speed <= Math.ceil(maxSpeedAtLimit) + 2; speed += step) {
             const point: any = { speed };
 
             fwdGears.forEach(gear => {
-                // Calculate RPM required for this speed in this gear
-                // RPM = (Speed * GearRatio * FinalDrive * 336) / TireDiameter
-                const rpm = (speed * gear.ratio * diffRatio * 336) / tireDiameter;
+                const rpm = calculateRpm(speed, gear.ratio, diffRatio, tireDiameter);
 
-                // Only plot if RPM is reasonable (e.g., within 0 to Limit + 500)
-                if (rpm <= rpmLimit + 500) {
+                // Only plot if RPM is reasonable
+                if (rpm <= rpmLimit + 400 && rpm >= 400) {
                     point[gear.name] = Math.round(rpm);
                 } else {
-                    point[gear.name] = null; // Don't draw line beyond
+                    point[gear.name] = null;
                 }
             });
             points.push(point);

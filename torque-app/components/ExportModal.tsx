@@ -13,7 +13,8 @@ interface ExportModalProps {
     filename: string;
     metadata?: {
         truckInternalName: string;
-        engineName: string;
+        componentName: string;
+        type: 'engine' | 'transmission';
     };
 }
 
@@ -50,19 +51,20 @@ export function ExportModal({ isOpen, onClose, title, code, filename, metadata }
         setIsPackaging(true);
         try {
             const blob = await generateScsBlob({
-                engineCode: localCode,
+                code: localCode,
                 filename: filename,
+                type: metadata?.type || 'engine',
                 truckInternalName: metadata?.truckInternalName || "peterbilt.389",
-                modName: `${metadata?.engineName || "Custom Engine"} (Tuned)`,
-                author: "Torque Architect"
+                modName: `${metadata?.componentName || "Powertrain"} (Tuned)`,
+                author: "Powertrain Architect"
             });
 
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
             // Name the archive nicely
-            const safeName = (metadata?.engineName || "engine").toLowerCase().replace(/[^a-z0-9]/g, "_");
-            a.download = `zeemod_${safeName}.scs`;
+            const safeName = (metadata?.componentName || "mod").toLowerCase().replace(/[^a-z0-9]/g, "_");
+            a.download = `ptarc_${safeName}.scs`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);

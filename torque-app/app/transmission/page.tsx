@@ -5,9 +5,11 @@ import { Save, RefreshCw, GitGraph, FileText } from "lucide-react";
 import { SpeedRpmChart } from "@/components/transmission/SpeedRpmChart";
 import { GearRatioTable } from "@/components/transmission/GearRatioTable";
 import { TransmissionSpecsPanel } from "@/components/transmission/TransmissionSpecsPanel";
+import { GearingAssistant } from "@/components/transmission/GearingAssistant";
 import { ExportModal } from "@/components/ExportModal";
 import { ImportModal } from "@/components/ImportModal";
 import { parseTransmissionSii } from "@/lib/siiParser";
+import { generateTransmissionSii } from "@/lib/transmissionSiiGenerator";
 
 const DEFAULT_GEARS = [
     { name: "Rev", ratio: -14.56 },
@@ -27,7 +29,8 @@ export default function TransmissionEditor() {
         diffRatio: 3.55,
         retarder: 0,
         rpmLimit: 2100,
-        tireDiameter: 41.5
+        tireDiameter: 41.5,
+        truckInternalName: ""
     });
 
     // Modal State
@@ -35,34 +38,11 @@ export default function TransmissionEditor() {
     const [isImportOpen, setIsImportOpen] = useState(false);
     const [exportCode, setExportCode] = useState("");
 
-    const generateSii = () => {
-        let sii = "SiiNunit\n{\n";
-        sii += `accessory_transmission_data : ${specs.name}.transmission {\n`;
-        sii += `\tname: "Eaton 10-Speed Tuned"\n`;
-        sii += `\tprice: ${specs.price}\n`;
-        sii += `\tunlock: ${specs.unlockLevel}\n\n`;
-
-        sii += `\t# Mechanics\n`;
-        sii += `\tdifferential_ratio: ${specs.diffRatio}\n`;
-        sii += `\tretarder: ${specs.retarder}\n\n`;
-
-        sii += `\t# Gear Ratios\n`;
-        // Reverse gears
-        const revGears = gears.filter(g => g.ratio < 0).sort((a, b) => a.ratio - b.ratio); // -14 vs -3. -14 is smaller, so it's "lower" gear? 
-        // ATS uses ratios: -14.56, etc.
-        revGears.forEach((g, idx) => {
-            sii += `\tratios_reverse[${idx}]: ${g.ratio}\n`;
-        });
-
-        sii += `\n`;
-
-        // Forward gears
-        const fwdGears = gears.filter(g => g.ratio > 0).sort((a, b) => b.ratio - a.ratio); // 12.0 first, 0.7 last
-        fwdGears.forEach((g, idx) => {
-            sii += `\tratios_forward[${idx}]: ${g.ratio} # ${g.name}\n`;
-        });
-
-        sii += "}\n}";
+    const handleGenerateSii = () => {
+        const sii = generateTransmissionSii({
+            ...specs,
+            gears
+        }, specs.name);
 
         setExportCode(sii);
         setIsExportOpen(true);
@@ -106,7 +86,7 @@ export default function TransmissionEditor() {
                         <RefreshCw className="w-4 h-4" /> Reset
                     </button>
                     <button
-                        onClick={generateSii}
+                        onClick={handleGenerateSii}
                         className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-sm font-medium transition-colors shadow-lg shadow-emerald-900/20"
                     >
                         <Save className="w-4 h-4" /> Export .sii
@@ -152,6 +132,13 @@ export default function TransmissionEditor() {
                         </div>
                         <GearRatioTable gears={gears} setGears={setGears} />
                     </div>
+
+                    <GearingAssistant
+                        gears={gears}
+                        tireDiameter={specs.tireDiameter}
+                        currentDiff={specs.diffRatio}
+                        onApplyDiff={(diff) => setSpecs({ ...specs, diffRatio: diff })}
+                    />
                 </div>
             </div>
 
@@ -161,6 +148,11 @@ export default function TransmissionEditor() {
                 title="Transmission Definition (.sii)"
                 code={exportCode}
                 filename={`${specs.name}.sii`}
+                metadata={{
+                    truckInternalName: specs.truckInternalName,
+                    componentName: specs.name,
+                    type: 'transmission'
+                }}
             />
 
             <ImportModal
