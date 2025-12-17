@@ -1,0 +1,12 @@
+# User Data & Reference Libraries
+/engine_mega/
+
+# IDE Files
+.vscode/
+
+# Build Artifacts (redundant but safe)
+/torque-app/dist/
+/torque-app/dist-*/
+/torque-app/out/
+/torque-app/.next/
+/torque-app/node_modules/
