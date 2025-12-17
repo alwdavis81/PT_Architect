@@ -64,16 +64,36 @@ Forget creating 10 folders manually.
 
 ---
 
-## ⚙️ 4. Transmission Designer
+## ⚙️ 4. Transmission Designer & Gearing Assistant
 
-Create custom gearboxes to match your engine.
-*   **Shift Points**: Visual graph shows where your RPM will land after a shift.
-*   **Ratios**: Edit individual gear ratios.
-*   **Differential**: Change final drive ratio (e.g., `2.64` for fuel economy, `4.11` for heavy haul).
+Create custom gearboxes to match your engine perfectly.
+
+### Transmission Presets
+Don't want to enter ratios manually?
+1. Open the **"Quick Start"** dropdown in the Transmission Designer.
+2. Choose from verified models like **Eaton Fuller 10/13/18 speeds** or **Allison Automatics**.
+3. All ratios, price, and unlock levels are set instantly.
+
+### Gearing Assistant (AI Optimization) 🤖
+Struggling to find the right differential ratio?
+1. Look at the **Gearing Assistant** panel.
+2. It talks to your engine configuration to find the optimal "Cruising RPM".
+3. Enter your target cruise speed (e.g., 65 MPH).
+4. Click **Apply Suggested Diff** to automatically snap your gearbox to the engine's peak power band.
 
 ---
 
-## ❓ 5. FAQ
+## 🌉 5. The Powertrain Bridge (Integration)
+
+In v1.1.0, the Engine and Transmission are now **Live Synced**:
+
+*   **Shared Identity**: If you set the "Truck Internal Name" in the Engine Tool, it automatically updates the Transmission Tool (and vice versa). No more mismatched mod configs.
+*   **Power Band Overlays**: On the Transmission chart, you will see **green dashed lines**. These represent the exact RPM range you defined in your engine's "Power Band". If your gear shifts land between these lines, your truck will pull with maximum efficiency.
+*   **Active Target**: Look at the Sidebar—the app now displays your "Active Target" truck mod globally so you always know what you're building for.
+
+---
+
+## ❓ 6. FAQ
 
 **Q: My engine has no sound!**
 A: Did you select a Sound Profile? If yes, do you have the "BCS Custom Engines" mod active in your load order? The generated engine *links* to that pack; it doesn't contain the sounds itself.
