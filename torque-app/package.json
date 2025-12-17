@@ -2,7 +2,7 @@
   "name": "torque-app",
   "version": "1.0.0",
   "description": "ATS/ETS2 Powertrain Architect",
-  "author": "Alfred Davis (m3gahrtz)",
+  "author": "Alfred Davis (alwdavis81)",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -22,7 +22,7 @@
       "publish": [
         {
           "provider": "github",
-          "owner": "m3gahrtz",
+          "owner": "alwdavis81",
           "repo": "PT_Architect"
         }
       ]
