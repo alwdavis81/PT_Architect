@@ -23,9 +23,10 @@ interface SpeedRpmChartProps {
     diffRatio: number;
     tireDiameter: number; // inches
     rpmLimit: number; // e.g., 2100
+    enginePowerRange?: { min: number; max: number };
 }
 
-export function SpeedRpmChart({ gears, diffRatio, tireDiameter, rpmLimit }: SpeedRpmChartProps) {
+export function SpeedRpmChart({ gears, diffRatio, tireDiameter, rpmLimit, enginePowerRange }: SpeedRpmChartProps) {
 
     // Calculate Speed (MPH) for a given RPM
     // Speed = (RPM * TireCircumference) / (GearRatio * FinalDrive * Conversion)
@@ -100,6 +101,23 @@ export function SpeedRpmChart({ gears, diffRatio, tireDiameter, rpmLimit }: Spee
                     />
 
                     <ReferenceLine y={rpmLimit} stroke="red" strokeDasharray="3 3" label={{ position: 'top', value: 'RPM Limit', fill: 'red', fontSize: 12 }} />
+
+                    {enginePowerRange && (
+                        <ReferenceLine
+                            y={enginePowerRange.min}
+                            stroke="#10b981"
+                            strokeDasharray="5 5"
+                            label={{ position: 'right', value: 'Power Band Start', fill: '#10b981', fontSize: 10 }}
+                        />
+                    )}
+                    {enginePowerRange && (
+                        <ReferenceLine
+                            y={enginePowerRange.max}
+                            stroke="#10b981"
+                            strokeDasharray="5 5"
+                            label={{ position: 'right', value: 'Power Band End', fill: '#10b981', fontSize: 10 }}
+                        />
+                    )}
 
                     {fwdGears.map((gear, idx) => (
                         <Line

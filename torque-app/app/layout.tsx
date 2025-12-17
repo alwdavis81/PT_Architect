@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { PowertrainProvider } from "@/context/PowertrainContext";
 
 export const metadata: Metadata = {
   title: "Powertrain Architect",
@@ -20,11 +21,13 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ThemeProvider>
-          <div className="titlebar" />
-          <AppSidebar />
-          <main className="flex-1 h-full overflow-auto bg-background p-8 transition-colors duration-300">
-            {children}
-          </main>
+          <PowertrainProvider>
+            <div className="titlebar" />
+            <AppSidebar />
+            <main className="flex-1 h-full overflow-auto bg-background p-8 transition-colors duration-300">
+              {children}
+            </main>
+          </PowertrainProvider>
         </ThemeProvider>
       </body>
     </html>

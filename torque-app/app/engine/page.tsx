@@ -12,6 +12,7 @@ import { ExportModal } from "@/components/ExportModal";
 import { ImportModal } from "@/components/ImportModal";
 import { parseEngineSii } from "@/lib/siiParser";
 import { patchEngineSii } from "@/lib/siiPatcher";
+import { usePowertrain } from "@/context/PowertrainContext";
 
 import { ENGINE_PRESETS } from "@/lib/presets";
 
@@ -29,38 +30,15 @@ const DEFAULT_CURVE = [
 ];
 
 export default function EngineEditor() {
-    const [curvePoints, setCurvePoints] = useState(DEFAULT_CURVE);
+    const {
+        engine: engineSpecs,
+        setEngine: setEngineSpecs,
+        engineCurve: curvePoints,
+        setEngineCurve: setCurvePoints
+    } = usePowertrain();
+
     const [originalContent, setOriginalContent] = useState<string | null>(null);
     const [showLibrary, setShowLibrary] = useState(false);
-
-    // Combined Specs State
-    const [engineSpecs, setEngineSpecs] = useState({
-        // Basic
-        id: undefined as string | undefined, // Fix for type inference
-        name: "c15_tuned",
-        truckInternalName: "",
-        price: 25000,
-        unlockLevel: 10,
-        targetHp: 600,
-        targetRpms: 1800,
-        torqueVal: 2050,
-        useImperial: true,
-
-        // Advanced
-        rpmLimit: 2400,
-        rpmLimitNeutral: 2400,
-        rpmIdle: 600,
-
-        engineBrake: 2.0,
-        engineBrakeDownshift: false,
-        engineBrakePositions: 3,
-
-        rpmRangeLowGear: { min: 900, max: 1500 },
-        rpmRangeHighGear: { min: 1100, max: 1500 },
-        rpmRangeEngineBrake: { min: 1500, max: 2500 },
-        rpmRangePower: { min: 1200, max: 1900 },
-        defaults: [] as string[] | undefined,
-    });
 
     // Modal State
     const [isExportOpen, setIsExportOpen] = useState(false);

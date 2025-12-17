@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { AppLogo } from "@/components/AppLogo";
+import { usePowertrain } from "@/context/PowertrainContext";
 
 const NAV_ITEMS = [
     {
@@ -44,6 +45,7 @@ const NAV_ITEMS = [
 
 export function AppSidebar() {
     const pathname = usePathname();
+    const { engine } = usePowertrain();
 
     return (
         <aside className="w-64 border-r border-border bg-card flex flex-col h-full shrink-0">
@@ -51,7 +53,10 @@ export function AppSidebar() {
                 <div className="mr-3">
                     <AppLogo />
                 </div>
-                <span className="font-bold text-lg tracking-tight">Powertrain Architect</span>
+                <div className="flex flex-col">
+                    <span className="font-bold text-lg tracking-tight">PT Architect</span>
+                    <span className="text-[10px] text-zinc-500 -mt-1 uppercase tracking-widest font-semibold">Pro Series</span>
+                </div>
             </div>
 
             <div className="flex-1 py-6 px-3 space-y-1">
@@ -76,11 +81,19 @@ export function AppSidebar() {
                         </Link>
                     );
                 })}
+
+                {engine.truckInternalName && (
+                    <div className="mt-8 px-4 py-3 bg-zinc-950/50 border border-zinc-800 rounded-lg mx-2">
+                        <div className="text-[10px] text-zinc-500 uppercase mb-1">Active Target</div>
+                        <div className="text-xs font-mono text-emerald-500 truncate">{engine.truckInternalName}</div>
+                    </div>
+                )}
             </div>
 
-            <div className="p-4 border-t border-border">
-                <div className="text-xs text-muted-foreground">
-                    v1.0.0 (Release)
+            <div className="p-4 border-t border-border bg-muted/20">
+                <div className="text-[10px] text-muted-foreground flex justify-between items-center">
+                    <span>v1.1.0-alpha</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 </div>
             </div>
         </aside>

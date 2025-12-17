@@ -10,6 +10,7 @@ import { ExportModal } from "@/components/ExportModal";
 import { ImportModal } from "@/components/ImportModal";
 import { parseTransmissionSii } from "@/lib/siiParser";
 import { generateTransmissionSii } from "@/lib/transmissionSiiGenerator";
+import { usePowertrain } from "@/context/PowertrainContext";
 
 const DEFAULT_GEARS = [
     { name: "Rev", ratio: -14.56 },
@@ -21,17 +22,13 @@ const DEFAULT_GEARS = [
 ];
 
 export default function TransmissionEditor() {
-    const [gears, setGears] = useState(DEFAULT_GEARS);
-    const [specs, setSpecs] = useState({
-        name: "eat_10_speed",
-        price: 12000,
-        unlockLevel: 0,
-        diffRatio: 3.55,
-        retarder: 0,
-        rpmLimit: 2100,
-        tireDiameter: 41.5,
-        truckInternalName: ""
-    });
+    const {
+        engine,
+        transmission: specs,
+        setTransmission: setSpecs,
+        gears,
+        setGears
+    } = usePowertrain();
 
     // Modal State
     const [isExportOpen, setIsExportOpen] = useState(false);
@@ -112,7 +109,8 @@ export default function TransmissionEditor() {
                             gears={gears}
                             diffRatio={specs.diffRatio}
                             tireDiameter={specs.tireDiameter}
-                            rpmLimit={specs.rpmLimit}
+                            rpmLimit={engine.rpmLimit || specs.rpmLimit}
+                            enginePowerRange={engine.rpmRangePower}
                         />
                     </div>
 
@@ -138,6 +136,7 @@ export default function TransmissionEditor() {
                         tireDiameter={specs.tireDiameter}
                         currentDiff={specs.diffRatio}
                         onApplyDiff={(diff) => setSpecs({ ...specs, diffRatio: diff })}
+                        defaultTargetRpm={engine.rpmRangeHighGear?.min || 1300}
                     />
                 </div>
             </div>

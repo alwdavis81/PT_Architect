@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sparkles, ArrowRight } from "lucide-react";
 import { suggestOptimalDiff } from "@/lib/transmissionUtils";
 
@@ -14,11 +14,17 @@ interface GearingAssistantProps {
     tireDiameter: number;
     currentDiff: number;
     onApplyDiff: (diff: number) => void;
+    defaultTargetRpm?: number;
 }
 
-export function GearingAssistant({ gears, tireDiameter, currentDiff, onApplyDiff }: GearingAssistantProps) {
+export function GearingAssistant({ gears, tireDiameter, currentDiff, onApplyDiff, defaultTargetRpm = 1300 }: GearingAssistantProps) {
     const [targetSpeed, setTargetSpeed] = useState(65);
-    const [targetRpm, setTargetRpm] = useState(1300);
+    const [targetRpm, setTargetRpm] = useState(defaultTargetRpm);
+
+    // Sync with engine when it changes
+    useEffect(() => {
+        setTargetRpm(defaultTargetRpm);
+    }, [defaultTargetRpm]);
 
     const fwdGears = gears.filter(g => g.ratio > 0).sort((a, b) => a.ratio - b.ratio);
     const topGear = fwdGears[0]; // Lowest ratio is highest gear
