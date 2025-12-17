@@ -18,7 +18,10 @@
     "appId": "com.mrmil.powertrainarchitect",
     "productName": "Powertrain Architect",
     "win": {
-      "target": "dir",
+      "target": [
+        "nsis",
+        "portable"
+      ],
       "publish": [
         {
           "provider": "github",
@@ -38,7 +41,13 @@
     ],
     "extraFiles": [
       "HOW_TO_USE.md"
-    ]
+    ],
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "deleteAppDataOnUninstall": true
+    }
   },
   "dependencies": {
     "autoprefixer": "^10.4.23",

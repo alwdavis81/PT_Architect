@@ -11,3 +11,4 @@ PRD.md
 /torque-app/out/
 /torque-app/.next/
 /torque-app/node_modules/
+/torque-app/.builder-cache/
