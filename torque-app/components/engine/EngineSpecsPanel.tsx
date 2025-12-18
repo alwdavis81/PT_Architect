@@ -6,23 +6,11 @@ import { SOUND_LIBRARY } from "@/lib/sounds";
 import { ENGINE_PRESETS } from "@/lib/presets";
 
 import { calculateTorqueNm, getRecommendedTorqueLbFt, ftLbToNm, nmToFtLb } from "@/lib/engineUtils";
-
-export interface EngineSpecs {
-    id?: string; // Internal engine ID (e.g. cat_3408.kenworth.w900.engine)
-    name: string;
-    price: number;
-    unlockLevel: number;
-    targetHp: number;
-    targetRpms: number;
-    torqueVal: number;
-    useImperial: boolean;
-    truckInternalName?: string;
-    defaults?: string[]; // Sound links
-}
+import { EngineSpecs } from "@/lib/types";
 
 interface EngineSpecsPanelProps {
     specs: EngineSpecs;
-    setSpecs: (specs: EngineSpecs) => void;
+    setSpecs: React.Dispatch<React.SetStateAction<EngineSpecs>>;
     onGenerateSmartCurve?: () => void;
     onLoadPreset: (id: string) => void;
 }

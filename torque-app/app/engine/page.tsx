@@ -152,16 +152,18 @@ export default function EngineEditor() {
             const truckPart = engineSpecs.truckInternalName && engineSpecs.truckInternalName.trim() ? `.${engineSpecs.truckInternalName.trim()}` : "";
             const finalId = `${safeBaseId}${truckPart}.engine`;
 
+            const infoRangeMin = engineSpecs.rpmRangePower?.min || 1200;
+            const infoRangeMax = engineSpecs.rpmRangePower?.max || 1600;
+
             sii = "SiiNunit\n{\n";
             sii += `accessory_engine_data : ${finalId}\n{\n`;
             sii += `\tname: "${engineSpecs.name.toUpperCase()} Tuned"\n`;
             sii += `\tprice: ${engineSpecs.price}\n`;
             sii += `\tunlock: ${engineSpecs.unlockLevel}\n`;
             sii += `\ticon: "engine_01"\n`;
-
             sii += `\tinfo[]: "${hp} @@hp@@ (${kw} @@kw@@)"\n`;
             sii += `\tinfo[]: "${lbft} @@lb_ft@@ (${nm} @@nm@@)"\n`;
-            sii += `\tinfo[]: "${rangeMin}-${rangeMax} @@rpm@@"\n\n`;
+            sii += `\tinfo[]: "${infoRangeMin}-${infoRangeMax} @@rpm@@"\n\n`;
 
             sii += `\t# Engine Specs\n`;
             sii += `\ttorque: ${engineSpecs.torqueVal}\n`;
@@ -335,7 +337,7 @@ export default function EngineEditor() {
                             <div className="bg-card border border-border rounded-xl p-6">
                                 <EngineSpecsPanel
                                     specs={engineSpecs}
-                                    setSpecs={setEngineSpecs as any}
+                                    setSpecs={setEngineSpecs}
                                     onGenerateSmartCurve={handleSmartCurve} // Passed here
                                     onLoadPreset={handleLoadPreset}
                                 />

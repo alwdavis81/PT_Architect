@@ -1,14 +1,21 @@
 # User Data & Reference Libraries
 /engine_mega/
 PRD.md
+*.rar
+*.zip
+*.7z
 
 # IDE Files
 .vscode/
+.idea/
+*.swp
 
-# Build Artifacts (redundant but safe)
+# Build Artifacts
 /torque-app/dist/
 /torque-app/dist-*/
 /torque-app/out/
 /torque-app/.next/
 /torque-app/node_modules/
 /torque-app/.builder-cache/
+/torque-app/.cache/
+/torque-app/pta.rar

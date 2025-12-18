@@ -9,7 +9,8 @@ import {
     Menu,
     Zap,
     GitGraph,
-    Info
+    Info,
+    Github
 } from "lucide-react";
 
 import { AppLogo } from "@/components/AppLogo";
@@ -90,10 +91,23 @@ export function AppSidebar() {
                 )}
             </div>
 
-            <div className="p-4 border-t border-border bg-muted/20">
-                <div className="text-[10px] text-muted-foreground flex justify-between items-center">
-                    <span>v1.1.0-alpha</span>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <div className="p-4 border-t border-border bg-muted/20 space-y-3">
+                <div className="flex items-center justify-between">
+                    <div className="text-[10px] text-muted-foreground flex items-center gap-2">
+                        <span>v1.1.1-alpha</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    </div>
+                    <a
+                        href="https://github.com/alwdavis81/PT_Architect"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        <Github className="w-3.5 h-3.5" />
+                    </a>
+                </div>
+                <div className="text-[10px] text-zinc-600 text-center font-medium">
+                    Built for the modding community
                 </div>
             </div>
         </aside>

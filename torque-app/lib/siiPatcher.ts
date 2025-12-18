@@ -1,207 +1,131 @@
 
-import { EngineSpecs } from "@/components/engine/EngineSpecsPanel";
-import { ExtendedEngineSpecs } from "@/components/engine/AdvancedSpecsPanel";
+export const patchEngineSii = (originalContent: string, specs: any, curvePoints: { rpm: number; ratio: number }[]): string => {
+    // 1. Determine Line Endings
+    const nl = originalContent.includes('\r\n') ? '\r\n' : '\n';
 
-// We need to support both standard EngineSpecs and ExtendedEngineSpecs
-// Ideally we unify these types, but for now we'll accept a superset
-type PatchSource = Partial<ExtendedEngineSpecs> & EngineSpecs;
+    // 2. Isolate the accessory_engine_data block
+    // We want to find the start of 'accessory_engine_data' and the corresponding closing '}'
+    const blockStartRegex = /accessory_engine_data\s*:\s*([^\s{]+)\s*\{/i;
+    const match = originalContent.match(blockStartRegex);
 
-interface CurvePoint {
-    rpm: number;
-    ratio: number;
-}
+    if (!match) return originalContent; // Not found
 
-/**
- * Patches an existing .sii file content with new engine specifications.
- * Uses Regex to preserve comments, indentation, and structure.
- */
-export const patchEngineSii = (
-    originalContent: string,
-    specs: PatchSource,
-    curvePoints: CurvePoint[]
-): string => {
-    let content = originalContent;
+    const startIdx = match.index!;
+    // Find the matching closing brace for this block
+    let openBraces = 0;
+    let endIdx = -1;
+    let foundStart = false;
 
-    // --- Helper: Replace simple key: value fields ---
-    const replaceField = (key: string, value: string | number) => {
-        // Regex looks for:
-        // Group 1: Start of line + whitespace + key + : + whitespace
-        // Group 2: The value (quoted string or non-whitespace/non-comment characters)
-        // It stops before a comment (#) or newline
-        const regex = new RegExp(`(^\\s*${key}\\s*:\\s*)(("[^"]*")|([^\\s#]+))`, "gm");
-
-        if (content.match(regex)) {
-            content = content.replace(regex, `$1${value}`);
-        }
-    };
-
-    // --- Helper: Replace ID in "accessory_engine_data : ID" ---
-    const patchAccessoryId = () => {
-        // If we have a specific ID we want to enforce (from import), use it.
-        // Otherwise generate one.
-        const idRegex = /(^\s*accessory_engine_data\s*:\s*)([^\s{]+)/m;
-
-        if (specs.id) {
-            // If the user hasn't explicitly cleared/changed the internal name logic presumably,
-            // we should trust the imported ID to keep it stable.
-            if (content.match(idRegex)) {
-                content = content.replace(idRegex, `$1${specs.id}`);
-                return;
+    for (let i = startIdx; i < originalContent.length; i++) {
+        if (originalContent[i] === '{') {
+            openBraces++;
+            foundStart = true;
+        } else if (originalContent[i] === '}') {
+            openBraces--;
+            if (foundStart && openBraces === 0) {
+                endIdx = i;
+                break;
             }
         }
-
-        if (!specs.name) return;
-
-        // Clean name and create base ID
-        const cleanName = specs.name.replace(/\s*[Tt]uned\s*$/, "").trim();
-        let newBaseId = cleanName.toLowerCase().replace(/[^a-z0-9_]/g, "_");
-
-        // Gogglez Safety: 4+ digit numbers -> k notation
-        newBaseId = newBaseId.replace(/(\d{4,})/g, (match) => {
-            const num = parseInt(match);
-            if (num >= 1000) return (num / 1000).toFixed(1).replace('.', 'k');
-            return match;
-        });
-        newBaseId = newBaseId.replace(/_+/g, "_").replace(/_$/, "");
-
-        const match = content.match(idRegex);
-        if (match) {
-            const originalId = match[2];
-            let newId = `${newBaseId}.engine`; // Default
-
-            // Logic: Try to inject into [base].[truck].[engine]
-            if (specs.truckInternalName && specs.truckInternalName.trim()) {
-                newId = `${newBaseId}.${specs.truckInternalName.trim()}.engine`;
-            } else {
-                // Preserve suffix if it exists
-                const parts = originalId.split('.');
-                if (parts.length >= 2) {
-                    const suffix = parts.slice(1).join('.');
-                    newId = `${newBaseId}.${suffix}`;
-                }
-            }
-            content = content.replace(idRegex, `$1${newId}`);
-        }
-    };
-
-    // --- Helper: Replace Torque Curve ---
-    const patchTorqueCurve = () => {
-        const sortedPoints = [...curvePoints].sort((a, b) => a.rpm - b.rpm);
-
-        // Find indentation from first existing curve point
-        const curveRegex = /^(\s*)torque_curve\[\].*$/m;
-        const match = content.match(curveRegex);
-        // Sanitize indent: Remove newlines, just keep horizontal whitespace (tabs/spaces)
-        const indent = match ? match[1].replace(/[\r\n]/g, "") : "\t";
-
-        // Generate new block
-        const newBlock = sortedPoints
-            .map(pt => `${indent}torque_curve[]: (${pt.rpm}, ${pt.ratio})`)
-            .join("\n");
-
-        // Strategy: 
-        // 1. Find the first torque_curve line.
-        // 2. Find the last torque_curve line (could be contiguous or separated by comments, but usually contiguous).
-        // For simplicity/robustness: We replace the *entire block* of torque_curve lines.
-
-        // We'll replace the *first* occurrence with a MARKER, and remove all subsequent occurrences
-        // Then replace MARKER with new block.
-
-        let found = false;
-        content = content.replace(/^(\s*)torque_curve\[\].*(\r?\n|$)/gm, (m) => {
-            if (!found) {
-                found = true;
-                return "__CURVE_MARKER__\n"; // Keep one newline
-            }
-            return ""; // Remove others
-        });
-
-        if (found) {
-            content = content.replace("__CURVE_MARKER__", newBlock);
-        } else {
-            // If no curves existed, append to end of block (risky, but better than nothing)
-            // Ideally finding "}" at very end and inserting before it
-            // For now, let's assume valid file has at least ONE curve or we skip
-        }
-    };
-
-    // --- Helper: Patch Ranges ---
-    const patchRange = (key: string, range?: { min: number, max: number }) => {
-        if (!range) return;
-        const regex = new RegExp(`(^\\s*${key}\\s*:\\s*)(\\([\\d,\\s]+\\))`, "gm");
-        content = content.replace(regex, `$1(${range.min}, ${range.max})`);
-    };
-
-    // --- Execution ---
-
-    // 1. ID
-    patchAccessoryId();
-
-    // 2. Core Strings
-    if (specs.name) {
-        const displayName = specs.name.replace(/\s*[Tt]uned\s*$/, "").toUpperCase() + " Tuned";
-        replaceField("name", `"${displayName}"`);
     }
 
-    if (specs.price) replaceField("price", specs.price);
-    if (specs.unlockLevel) replaceField("unlock", specs.unlockLevel);
+    if (endIdx === -1) return originalContent;
 
-    // 3. Info Strings (The tricky part)
-    // We want to update the "info[]" lines.
-    // Usually: 
-    // info[]: "500 @@hp@@ (373 @@kw@@)"
-    // info[]: "1850 @@lb_ft@@ (2508 @@nm@@)"
-    // info[]: "1200-1600 @@rpm@@"
+    const beforeBlock = originalContent.substring(0, startIdx);
+    let blockContent = originalContent.substring(startIdx, endIdx + 1);
+    const afterBlock = originalContent.substring(endIdx + 1);
 
-    // Strategy: Remove all existing info[] lines and re-inject them after 'icon:' or 'name:'
+    // 3. Helper to update a single value while preserving format/comments
+    const updateKey = (content: string, key: string, newValue: string | number) => {
+        const regex = new RegExp(`^(\\s*)${key}\\s*:\\s*([^\\n\\r]+)(.*)$`, 'im');
+        if (regex.test(content)) {
+            return content.replace(regex, `$1${key}: ${newValue}$3`);
+        } else {
+            // Add it before the closing brace if missing, trying to match indentation
+            const lines = content.split(/\r?\n/);
+            const indentMatch = content.match(/^(\s+)/m);
+            const indent = indentMatch ? indentMatch[1] : '\t';
+            const closingBraceIdx = lines.findLastIndex(l => l.includes('}'));
+            if (closingBraceIdx !== -1) {
+                lines.splice(closingBraceIdx, 0, `${indent}${key}: ${newValue}`);
+            }
+            return lines.join(nl);
+        }
+    };
+
+    // 4. Update basic keys in blockContent
+    blockContent = updateKey(blockContent, 'name', `"${specs.name.toUpperCase()} Tuned"`);
+    blockContent = updateKey(blockContent, 'price', specs.price);
+    blockContent = updateKey(blockContent, 'unlock', specs.unlockLevel);
+    blockContent = updateKey(blockContent, 'torque', specs.torqueVal);
+    blockContent = updateKey(blockContent, 'rpm_idle', specs.rpmIdle);
+    blockContent = updateKey(blockContent, 'rpm_limit', specs.rpmLimit);
+    blockContent = updateKey(blockContent, 'rpm_limit_neutral', specs.rpmLimitNeutral);
+    blockContent = updateKey(blockContent, 'engine_brake', specs.engineBrake.toFixed(1));
+    blockContent = updateKey(blockContent, 'engine_brake_downshift', specs.engineBrakeDownshift ? 1 : 0);
+    blockContent = updateKey(blockContent, 'engine_brake_positions', specs.engineBrakePositions);
+
+    // Update Ranges
+    blockContent = updateKey(blockContent, 'rpm_range_low_gear', `(${specs.rpmRangeLowGear.min}, ${specs.rpmRangeLowGear.max})`);
+    blockContent = updateKey(blockContent, 'rpm_range_high_gear', `(${specs.rpmRangeHighGear.min}, ${specs.rpmRangeHighGear.max})`);
+    blockContent = updateKey(blockContent, 'rpm_range_engine_brake', `(${specs.rpmRangeEngineBrake.min}, ${specs.rpmRangeEngineBrake.max})`);
+
+    if (specs.rpmRangePower) {
+        blockContent = updateKey(blockContent, 'rpm_range_power', `(${specs.rpmRangePower.min}, ${specs.rpmRangePower.max})`);
+    }
+
+    // 5. Update info[] strings (special handling)
     const hp = specs.targetHp;
     const kw = Math.round(hp * 0.7457);
-    const lbft = Math.round(specs.torqueVal * 0.73756); // approx
-    const nm = specs.torqueVal;
+    const lbft = Math.round(specs.torqueVal * 0.73756);
+    const nm = Math.round(specs.torqueVal);
+    const rangeMin = specs.rpmRangePower?.min || 1200;
+    const rangeMax = specs.rpmRangePower?.max || 1600;
 
-    // Find indent
-    const nameMatch = content.match(/^(\s*)name:/m);
-    const indent = nameMatch ? nameMatch[1] : "\t";
+    const hpString = `"${hp} @@hp@@ (${kw} @@kw@@)"`;
+    const tqString = `"${lbft} @@lb_ft@@ (${nm} @@nm@@)"`;
+    const rpmString = `"${rangeMin}-${rangeMax} @@rpm@@"`;
 
-    const newInfoBlock = [
-        `${indent}info[]: "${hp} @@hp@@ (${kw} @@kw@@)"`,
-        `${indent}info[]: "${lbft} @@lb_ft@@ (${nm} @@nm@@)"`,
-        `${indent}info[]: "1200-1600 @@rpm@@"` // Harcoded range for now, could be dynamic
-    ].join("\n");
+    // Target the specific info lines
+    // This is naive and assumes standard order, but safe enough if we match text
+    blockContent = blockContent.replace(/info\[\]\s*:\s*"[^"]+@@hp@@[^"]+"/, `info[]: ${hpString}`);
+    blockContent = blockContent.replace(/info\[\]\s*:\s*"[^"]+@@lb_ft@@[^"]+"/, `info[]: ${tqString}`);
+    blockContent = blockContent.replace(/info\[\]\s*:\s*"[^"]+-(?:[0-9]+)\s*@@rpm@@[^"]+"/, `info[]: ${rpmString}`);
 
-    // Remove old info[]
-    content = content.replace(/^\s*info\[\].*(\r?\n|$)/gm, "");
+    // 6. Update Torque Curves (Rebuild entire section)
+    const curveRegex = /(\s*)torque_curve\[\]\s*:\s*\([^)]+\)[\r\n]*/gi;
+    const firstCurveMatch = blockContent.match(curveRegex);
+    const indent = firstCurveMatch ? firstCurveMatch[0].match(/^\s*/)?.[0] || '\t' : '\t';
 
-    // Inject new (after icon, or if missing, after name)
-    if (content.match(/^\s*icon:/m)) {
-        content = content.replace(/(^\s*icon:.*$)/m, `$1\n${newInfoBlock}`);
+    // Sort and format new curve
+    const sortedPoints = [...curvePoints].sort((a, b) => a.rpm - b.rpm);
+    const newCurveLines = sortedPoints.map(p => `${indent}torque_curve[]: (${p.rpm}, ${p.ratio})`).join(nl) + nl;
+
+    if (firstCurveMatch) {
+        // Find the start of the first curve and end of the last consecutive one
+        const matches = [...blockContent.matchAll(curveRegex)];
+        const start = matches[0].index!;
+        const end = matches[matches.length - 1].index! + matches[matches.length - 1][0].length;
+        blockContent = blockContent.substring(0, start) + newCurveLines + blockContent.substring(end);
     } else {
-        content = content.replace(/(^\s*name:.*$)/m, `$1\n${newInfoBlock}`);
+        // Append before last closing brace
+        const lines = blockContent.split(/\r?\n/);
+        const closingBraceIdx = lines.findLastIndex(l => l.includes('}'));
+        if (closingBraceIdx !== -1) {
+            lines.splice(closingBraceIdx, 0, newCurveLines);
+        }
+        blockContent = lines.join(nl);
     }
 
-    // 4. Specs
-    replaceField("torque", specs.torqueVal);
-    // Note: volume is not editable in UI yet, preserve original
+    // 7. Reassemble
+    let finalContent = beforeBlock + blockContent + afterBlock;
 
-    if (specs.rpmIdle) replaceField("rpm_idle", specs.rpmIdle);
-    if (specs.rpmLimit) replaceField("rpm_limit", specs.rpmLimit);
-    if (specs.rpmLimitNeutral) replaceField("rpm_limit_neutral", specs.rpmLimitNeutral);
+    // Final Cleanup (Consecutive newlines)
+    const doubleNl = nl + nl;
+    const tripleNl = nl + nl + nl;
+    while (finalContent.includes(tripleNl)) {
+        finalContent = finalContent.split(tripleNl).join(doubleNl);
+    }
 
-    if (specs.engineBrake) replaceField("engine_brake", specs.engineBrake.toFixed(1));
-    if (specs.engineBrakeDownshift !== undefined) replaceField("engine_brake_downshift", specs.engineBrakeDownshift ? 1 : 0);
-    if (specs.engineBrakePositions) replaceField("engine_brake_positions", specs.engineBrakePositions);
-
-    // 5. Ranges
-    patchRange("rpm_range_low_gear", specs.rpmRangeLowGear);
-    patchRange("rpm_range_high_gear", specs.rpmRangeHighGear);
-    patchRange("rpm_range_engine_brake", specs.rpmRangeEngineBrake);
-    patchRange("rpm_range_power", specs.rpmRangePower);
-
-    // 6. Curve
-    patchTorqueCurve();
-
-    // Cleanup excessive newlines
-    content = content.replace(/\n{3,}/g, "\n\n");
-
-    return content;
+    return finalContent;
 };
